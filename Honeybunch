@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bite of Love ❤️</title>
+    <style>
+        :root {
+            --primary: #ff6b6b;
+            --bg: #fff0f3;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .heart {
+            font-size: 3rem;
+            animation: beat 1s infinite;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        @keyframes beat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.15);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input[type="time"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input[type="text"]:focus, input[type="time"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        .btn-nudge {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            transition: transform 0.1s;
+        }
+
+        .btn-nudge:active { transform: scale(0.98); }
+
+        .status {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        /* Permission Button */
+        #permBtn {
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="heart">❤️</div>
+    <h1>Bite of Love</h1>
+    <p>Don't forget to eat, I love you!</p>
+    
+    <button id="permBtn" onclick="requestPermission()">Enable Notifications ❤️</button>
+
+    <!-- Breakfast -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Breakfast</label>
+            <label class="switch">
+                <input type="checkbox" id="breakfastOn" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <input type="time" id="breakfastTime" value="08:00">
+        <input type="text" id="breakfastMsg" value="Good morning handsome! Time for breakfast ☕">
+    </div>
+
+    <!-- Lunch -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Lunch</label>
+            <label class="switch">
+                <input type="checkbox" id="lunchOn" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <input type="time" id="lunchTime" value="12:30">
+        <input type="text" id="lunchMsg" value="Time to take a break and eat! 🍕">
+    </div>
+
+    <!-- Dinner -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Dinner</label>
+            <label class="switch">
+                <input type="checkbox" id="dinnerOn" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <input type="time" id="dinnerTime" value="19:00">
+        <input type="text" id="dinnerMsg" value="Don't forget dinner! 🍲 I love you.">
+    </div>
+
+    <button class="btn-nudge" onclick="nudgeNow()">💌 Nudge Him Now (Send Love)</button>
+    
+    <div class="status" id="statusText">App is running in background</div>
+</div>
+
+<script>
+    // Simple beep sound using AudioContext to avoid external files
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playNotificationSound() {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function requestPermission() {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                document.getElementById('permBtn').style.display = 'none';
+                new Notification("Notifications Enabled!", { 
+                    body: "I'll remind him to eat 💕",
+                    icon: "https://emojicdn.elk.sh/❤️"
+                });
+            }
+        });
+    }
+
+    function nudgeNow() {
+        const msg = "You have a message from your girlfriend! 💌";
+        
+        // Play sound
+        playNotificationSound();
+        
+        // Vibrate
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+
+        // Browser Notification
+        if (Notification.permission === "granted") {
+            new Notification("Hey Love! 💕", {
+                body: "She is thinking about you right now!",
+                icon: "https://emojicdn.elk.sh/🍕"
+            });
+        }
+        
+        alert("Nudge Sent! ❤️");
+    }
+
+    function checkTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const currentTime = `${hours}:${minutes}`;
+
+        // Check Breakfast
+        if (document.getElementById('breakfastOn').checked && 
+            document.getElementById('breakfastTime').value === currentTime && 
+            !document.getElementById('breakfastFired')) {
+                
+            sendAlert('breakfastMsg');
+            document.getElementById('breakfastFired', true); // Prevent looping
+        }
+
+        // Check Lunch
+        if (document.getElementById('lunchOn').checked && 
+            document.getElementById('lunchTime').value === currentTime &&
+            !document.getElementById('lunchFired')) {
+            sendAlert('lunchMsg');
+            document.getElementById('lunchFired', true);
+        }
+
+        // Check Dinner
+        if (document.getElementById('dinnerOn').checked && 
+            document.getElementById('dinnerTime').value === currentTime &&
+            !document.getElementById('dinnerFired')) {
+            sendAlert('dinnerMsg');
+            document.getElementById('dinnerFired', true);
+        }
+    }
+
+    function sendAlert(msgId) {
+        const msg = document.getElementById(msgId).value;
+        playNotificationSound();
+        if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+        
+        if (Notification.permission === "granted") {
+            new Notification("Time to Eat! 🍽️", {
+                body: msg,
+                icon: "https://emojicdn.elk.sh/🍽️"
+            });
+        }
+    }
+
+    // Check permission on load
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        document.getElementById('permBtn').style.display = 'inline-block';
+    }
+
+    // Run check every minute
+    setInterval(checkTime, 60000);
+
+    // Also run immediately on load
+    checkTime();
+</script>
+
+</body>
+</html>
